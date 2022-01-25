@@ -1,6 +1,7 @@
 package com.example.callbackflowapinetworkcheck
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,13 +9,17 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.callbackflowapinetworkcheck.databinding.FragmentFirstBinding
+import com.example.callbackflowapinetworkcheck.util.checkEtTextChange
 import com.example.callbackflowapinetworkcheck.util.checkNetwork
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
+@FlowPreview
 @ExperimentalCoroutinesApi
 class FirstFragment : Fragment() {
 
@@ -42,25 +47,22 @@ class FirstFragment : Fragment() {
             requireContext().checkNetwork().collect { networkStatusBoolean ->
                 val check = when (networkStatusBoolean) {
                     true -> {
-//                        binding.tvNetworkStatus.setTextColor(
-//                            ContextCompat.getColor(
-//                                requireContext(),
-//                                R.color.green
-//                            )
-//                        )
                         "Connected with Internet"
                     }
                     false -> {
-//                        binding.tvNetworkStatus.setTextColor(
-//                            ContextCompat.getColor(
-//                                requireContext(),
-//                                R.color.red
-//                            )
-//                        )
                         "Not connected"
                     }
                 }
                 binding.tvNetworkStatus.text = check
+            }
+        }
+
+        lifecycleScope.launchWhenStarted {
+            binding.etTextChange.checkEtTextChange()
+                .debounce(500L) //500 millis ma jetlu text type thashe, eeetlo text add thashe
+                .collect { newText->
+                binding.tvNetworkStatus.text = "${binding.tvNetworkStatus.text} $newText"
+                    Log.d("VRAJTEST", "onViewCreated: $newText")
             }
         }
     }
